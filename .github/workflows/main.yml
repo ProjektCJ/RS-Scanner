@@ -1,0 +1,33 @@
+name: Daily Stock Data Update
+
+on:
+  schedule:
+    - cron: '0 21 * * 1-5' # Mo-Fr um 21:00 UTC (22:00 Uhr deutscher Zeit)
+  workflow_dispatch: # Erlaubt manuelles Starten per Klick
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install yfinance pandas requests lxml html5lib
+
+      - name: Run Update Script
+        run: python update_data.py
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "GitHub Action Bot"
+          git config --global user.email "actions@github.com"
+          git add Data/Screener_Data.csv Data/SPY_Data.csv
+          git commit -m "Auto-Update Börsendaten $(date)" || echo "Keine Änderungen"
+          git push
